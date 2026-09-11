@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: okotest
+      POSTGRES_PASSWORD: okotest
+      POSTGRES_DB: okotest
+    ports:
+      - "5432:5432"
+    volumes:
+      - okotest_pgdata:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+
+volumes:
+  okotest_pgdata:

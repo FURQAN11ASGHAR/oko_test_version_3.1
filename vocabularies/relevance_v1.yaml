@@ -1,0 +1,34 @@
+# Finding × context relevance table (spec §7.4). Static, version-controlled,
+# human-authored. The LLM extracts findings; it never decides relevance.
+version: relevance_v1.0
+map:
+  halogenorganic_compounds:
+    skin_leave_on:  { relevance: high }
+    skin_rinse_off: { relevance: moderate }
+    infant:         { relevance: high, escalate: true }
+    daily:          { relevance: elevated_by_frequency }
+  fragrance_allergens:
+    skin_leave_on:  { relevance: high }
+    allergy_prone:  { relevance: high, escalate: true }
+    infant:         { relevance: high, escalate: true }
+  formaldehyde:
+    skin_leave_on:  { relevance: high }
+    infant:         { relevance: high, escalate: true }
+    pregnancy:      { relevance: high, escalate: true }
+  microplastics:
+    outdoor:        { relevance: low }
+  peg_peg_derivatives:
+    skin_leave_on:  { relevance: moderate }
+    skin_rinse_off: { relevance: low }
+  mineral_oil_hydrocarbons:
+    food_contact:   { relevance: high, escalate: true }
+    skin_leave_on:  { relevance: moderate }
+  preservatives_problematic:
+    skin_leave_on:  { relevance: moderate }
+    infant:         { relevance: high, escalate: true }
+  silicones:
+    skin_rinse_off: { relevance: low }
+  pesticide_residues:
+    food_contact:   { relevance: high, escalate: true }
+  packaging_deduction:
+    outdoor:        { relevance: low }

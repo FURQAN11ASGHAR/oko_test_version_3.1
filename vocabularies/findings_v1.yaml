@@ -1,0 +1,25 @@
+# Closed vocabulary of finding codes (spec §7.3). Extraction producing a code
+# outside this list is routed to review_queue, never persisted.
+# Grows by human review only — never at request time.
+version: findings_v1
+codes:
+  halogenorganic_compounds:
+    label: "Halogenorganische Verbindungen"
+  fragrance_allergens:
+    label: "Duftstoff-Allergene"
+  formaldehyde:
+    label: "Formaldehyd"
+  microplastics:
+    label: "Mikroplastik"
+  peg_peg_derivatives:
+    label: "PEG/PEG-Derivate"
+  mineral_oil_hydrocarbons:
+    label: "Mineralölbestandteile (MOSH/MOAH)"
+  preservatives_problematic:
+    label: "Bedenkliche Konservierungsstoffe"
+  silicones:
+    label: "Silikone"
+  pesticide_residues:
+    label: "Pestizidrückstände"
+  packaging_deduction:
+    label: "Abwertung wegen Verpackung"

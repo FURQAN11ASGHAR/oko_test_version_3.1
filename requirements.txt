@@ -1,0 +1,14 @@
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+asyncpg==0.30.0
+httpx==0.28.1
+pydantic==2.10.4
+python-multipart==0.0.20
+pyzbar==0.1.9
+Pillow==11.0.0
+PyYAML==6.0.2
+python-ulid==2.7.0
+ddgs==9.16.0
+# Used only for the pre-vision-call downscale (app/pipeline/image_resize.py).
+# -headless: no GUI/display dependencies needed on a server.
+opencv-python-headless==4.10.0.84

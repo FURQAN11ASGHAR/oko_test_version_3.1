@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Öko-Test Scan — test page</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 14px/1.4 system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+  h1 { font-size: 1.3rem; }
+  fieldset { border: 1px solid #8884; border-radius: 8px; margin-bottom: 1rem; }
+  legend { padding: 0 .4rem; font-weight: 600; }
+  label { display: block; margin: .5rem 0 .2rem; font-size: .85rem; opacity: .85; }
+  input[type=text], input[type=url], select, textarea { width: 100%; padding: .4rem; box-sizing: border-box; }
+  .row { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .row > div { flex: 1; min-width: 160px; }
+  .checks { display: flex; flex-wrap: wrap; gap: .6rem; }
+  .checks label { display: flex; align-items: center; gap: .3rem; font-size: .8rem; margin: 0; }
+  .checks input { width: auto; }
+  button { padding: .6rem 1.2rem; font-size: 1rem; cursor: pointer; }
+  #preview { max-width: 220px; max-height: 220px; display: none; margin-top: .5rem; border-radius: 6px; }
+  #status { margin: 1rem 0; font-weight: 600; }
+  #result { white-space: pre-wrap; }
+  .card { border: 1px solid #8884; border-radius: 8px; padding: .8rem 1rem; margin: .5rem 0; }
+  .badge { display: inline-block; padding: .1rem .5rem; border-radius: 4px; font-size: .8rem; font-weight: 600; color: #fff; }
+  .b-sehr_gut, .b-gut { background: #2e7d32; }
+  .b-befriedigend { background: #f9a825; color: #000; }
+  .b-ausreichend { background: #ef6c00; }
+  .b-mangelhaft, .b-ungenuegend { background: #c62828; }
+  .warn { color: #c62828; }
+  details summary { cursor: pointer; opacity: .7; }
+  pre { background: #8881; padding: .6rem; border-radius: 6px; overflow-x: auto; }
+</style>
+</head>
+<body>
+
+<h1>Öko-Test Scan — test page</h1>
+<div style="opacity:.5;font-size:11px;margin-bottom:1rem">build: test-report-v1 — if you don't see this line, hard-reload (Ctrl+Shift+R)</div>
+
+<label>API key (X-API-Key)</label>
+<input type="text" id="apiKey" placeholder="ok_live_...">
+
+<form id="scanForm" autocomplete="off">
+  <label>Image</label>
+  <input type="file" id="image" accept="image/jpeg,image/png,image/webp" required>
+  <img id="preview">
+
+  <div class="row">
+    <div>
+      <label>Hint</label>
+      <input type="text" id="hint" placeholder="e.g. Alverde shampoo">
+    </div>
+    <div>
+      <label>Locale</label>
+      <input type="text" id="locale" value="de-DE">
+    </div>
+  </div>
+
+  <label><input type="checkbox" id="allowLiveLookup" checked autocomplete="off" style="width:auto"> Allow live lookup (tier 3)</label>
+
+  <fieldset>
+    <legend>Usage context (optional — spec §7)</legend>
+    <label>Intended use</label>
+    <div class="checks" id="intendedUse">
+      <label><input type="checkbox" value="infant">infant</label>
+      <label><input type="checkbox" value="child">child</label>
+      <label><input type="checkbox" value="adult">adult</label>
+      <label><input type="checkbox" value="pregnancy">pregnancy</label>
+      <label><input type="checkbox" value="breastfeeding">breastfeeding</label>
+      <label><input type="checkbox" value="sensitive_skin">sensitive_skin</label>
+      <label><input type="checkbox" value="allergy_prone">allergy_prone</label>
+      <label><input type="checkbox" value="pets">pets</label>
+    </div>
+    <div class="row">
+      <div>
+        <label>Application</label>
+        <select id="application">
+          <option value="">—</option>
+          <option>skin_leave_on</option>
+          <option>skin_rinse_off</option>
+          <option>oral</option>
+          <option>inhaled</option>
+          <option>food_contact</option>
+          <option>textile_worn</option>
+          <option>household_surface</option>
+          <option>outdoor</option>
+        </select>
+      </div>
+      <div>
+        <label>Frequency</label>
+        <select id="frequency">
+          <option value="">—</option>
+          <option>single</option>
+          <option>occasional</option>
+          <option>weekly</option>
+          <option>daily</option>
+        </select>
+      </div>
+      <div>
+        <label>Environment</label>
+        <select id="environment">
+          <option value="">—</option>
+          <option>indoor_bedroom</option>
+          <option>indoor_living</option>
+          <option>indoor_wet</option>
+          <option>outdoor</option>
+          <option>enclosed_vehicle</option>
+        </select>
+      </div>
+    </div>
+    <label>Notes</label>
+    <textarea id="notes" rows="2" maxlength="500" placeholder="identification hint only — never used for relevance matching"></textarea>
+  </fieldset>
+
+  <button type="submit" id="submitBtn">Scan</button>
+</form>
+
+<div id="status"></div>
+<div id="result"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+$('image').addEventListener('change', () => {
+  const f = $('image').files[0];
+  if (!f) { $('preview').style.display = 'none'; return; }
+  $('preview').src = URL.createObjectURL(f);
+  $('preview').style.display = 'block';
+});
+
+function buildContext() {
+  const intended_use = [...document.querySelectorAll('#intendedUse input:checked')].map(i => i.value);
+  const ctx = {};
+  if (intended_use.length) ctx.intended_use = intended_use;
+  if ($('application').value) ctx.application = $('application').value;
+  if ($('frequency').value) ctx.frequency = $('frequency').value;
+  if ($('environment').value) ctx.environment = $('environment').value;
+  if ($('notes').value.trim()) ctx.notes = $('notes').value.trim();
+  return Object.keys(ctx).length ? ctx : null;
+}
+
+function verdictBadge(r) {
+  if (!r) return '';
+  return `<span class="badge b-${r.verdict}">${r.verdict_label}</span>`;
+}
+
+function renderScan(scan) {
+  const lines = [];
+  lines.push(`<div class="card"><b>scan_id</b> ${scan.scan_id}<br><b>status</b> ${scan.status}</div>`);
+
+  if (scan.error) {
+    // Short-circuit response (see app/schemas.py): spam/unreadable photo or a
+    // real system failure. Nothing else in the payload is useful here, so
+    // show just the message — no "No test results" card, no Raw JSON dump.
+    lines.push(`<div class="card warn">
+      <b>Error</b> ${scan.reason ? `<code>${scan.reason}</code>` : ''}<br>
+      ${scan.message ?? 'Something went wrong. Please try again.'}
+    </div>`);
+    $('result').innerHTML = lines.join('');
+    return;
+  }
+
+  if (scan.resolution) {
+    const r = scan.resolution;
+    lines.push(`<div class="card">
+      <b>Resolution</b><br>
+      tier: <b>${r.tier}</b> &nbsp; confidence: ${r.confidence ?? '—'} &nbsp; verified: ${r.verified}
+      ${r.reason ? `<br>reason: <code>${r.reason}</code>` : ''}
+    </div>`);
+  }
+
+  if (scan.product) {
+    const p = scan.product;
+    lines.push(`<div class="card">
+      <b>Product</b><br>
+      ${p.brand ?? ''} — ${p.name ?? ''} ${p.variant ? '(' + p.variant + ')' : ''}<br>
+      <small>${p.category ?? ''} ${p.gtins?.length ? '· GTIN ' + p.gtins.join(', ') : ''}</small>
+      ${p.product_id ? `<br><small>product_id: ${p.product_id}</small>` : ''}
+    </div>`);
+  }
+
+  if (scan.product?.general_info) {
+    const gi = scan.product.general_info;
+    lines.push(`<div class="card">
+      <b>General info</b> <small>(not an Öko-Test finding)</small><br>
+      ${gi.description ? gi.description + '<br>' : ''}
+      ${gi.features?.length ? '<ul>' + gi.features.map(f => `<li>${f}</li>`).join('') + '</ul>' : ''}
+      ${gi.source_urls?.length ? gi.source_urls.map(u => `<a href="${u}" target="_blank" rel="noopener">${u}</a>`).join('<br>') : ''}
+      <small class="warn">${gi.disclaimer ?? ''}</small>
+    </div>`);
+  }
+
+  if (scan.test_results?.length) {
+    for (const r of scan.test_results) {
+      lines.push(`<div class="card">
+        ${verdictBadge(r)} <b>${r.publication?.test_name ?? ''}</b><br>
+        <small>${r.publication?.issue ?? ''} · ${r.test_date ?? ''}</small>
+        ${r.findings?.length ? '<br>Findings: ' + r.findings.map(f => f.label || f.code).join(', ') : ''}
+        ${r.source_urls?.length ? `<br><a href="${r.source_urls[0]}" target="_blank" rel="noopener">source</a>` : ''}
+      </div>`);
+    }
+  } else if (scan.status === 'completed' && !scan.test_report) {
+    lines.push(`<div class="card">No test results.</div>`);
+  }
+
+  if (scan.test_report) {
+    const tr = scan.test_report;
+    lines.push(`<div class="card">
+      <b>Test report</b>: ${tr.test_name ?? tr.subject ?? ''} <small>${tr.issue ?? ''} · ${tr.test_date ?? ''}</small><br>
+      ${tr.products.map(p => `${verdictBadge(p.test_results?.[0])} ${p.brand ?? ''} — ${p.name ?? ''}`).join('<br>')}
+    </div>`);
+  }
+
+  if (scan.context_relevance) {
+    const cr = scan.context_relevance;
+    lines.push(`<div class="card">
+      <b>Context relevance</b> (map ${cr.relevance_map_version})<br>
+      escalated: ${cr.escalated} &nbsp; disclaimer_required: ${cr.disclaimer_required}<br>
+      ${cr.relevant_findings.map(f => `${f.label || f.code} — <b>${f.relevance}</b> (${f.why})`).join('<br>') || 'none'}
+    </div>`);
+  }
+
+  if (scan.warnings?.length) {
+    lines.push(`<div class="card warn"><b>Warnings</b><br>${scan.warnings.map(w => `${w.code}: ${w.message}`).join('<br>')}</div>`);
+  }
+
+  lines.push(`<details><summary>Raw JSON</summary><pre>${JSON.stringify(scan, null, 2)}</pre></details>`);
+  $('result').innerHTML = lines.join('');
+}
+
+async function poll(pollUrl, apiKey) {
+  while (true) {
+    await new Promise(r => setTimeout(r, 1200));
+    const res = await fetch(pollUrl, { headers: { 'X-API-Key': apiKey } });
+    const body = await res.json();
+    $('status').textContent = `Polling… status: ${body.status}`;
+    if (['completed', 'failed', 'expired'].includes(body.status)) {
+      renderScan(body);
+      $('status').textContent = `Done — ${body.status}`;
+      return;
+    }
+  }
+}
+
+$('scanForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const apiKey = $('apiKey').value.trim();
+  const file = $('image').files[0];
+  if (!apiKey) return alert('Enter an API key first.');
+  if (!file) return alert('Choose an image.');
+
+  $('submitBtn').disabled = true;
+  const allowLiveLookup = $('allowLiveLookup').checked ? 'true' : 'false';
+  $('status').textContent = `Submitting… (allow_live_lookup=${allowLiveLookup})`;
+  $('result').innerHTML = '';
+
+  const form = new FormData();
+  form.append('image', file);
+  if ($('hint').value.trim()) form.append('hint', $('hint').value.trim());
+  form.append('locale', $('locale').value.trim() || 'de-DE');
+  form.append('allow_live_lookup', allowLiveLookup);
+  const ctx = buildContext();
+  if (ctx) form.append('context', JSON.stringify(ctx));
+
+  try {
+    const res = await fetch('/v1/scans', { method: 'POST', headers: { 'X-API-Key': apiKey }, body: form });
+    const body = await res.json();
+    if (!res.ok) {
+      $('status').textContent = `Error ${res.status}: ${body.error?.code}`;
+      $('result').innerHTML = `<pre>${JSON.stringify(body, null, 2)}</pre>`;
+      return;
+    }
+    if (body.status === 'completed' || body.status === 'failed') {
+      $('status').textContent = `Done — ${body.status}`;
+      renderScan(body);
+    } else {
+      $('status').textContent = `Accepted — status: ${body.status}`;
+      renderScan(body);
+      await poll(body.poll_url ?? `/v1/scans/${body.scan_id}`, apiKey);
+    }
+  } catch (err) {
+    $('status').textContent = 'Request failed: ' + err.message;
+  } finally {
+    $('submitBtn').disabled = false;
+  }
+});
+
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('okotest_api_key');
+  if (saved) $('apiKey').value = saved;
+  $('apiKey').addEventListener('change', () => localStorage.setItem('okotest_api_key', $('apiKey').value.trim()));
+});
+</script>
+</body>
+</html>
